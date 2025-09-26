@@ -14,9 +14,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        show_sqlL: true
+        show_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
-
   data:
     redis:
       host: localhost
@@ -26,6 +25,10 @@ spring:
           max-active: 10
           max-idle: 10
           min-idle: 0
+oauth:
+  kakao:
+    redirect-uris:
+      - http://localhost3000/callback
 
 logging:
   level:
