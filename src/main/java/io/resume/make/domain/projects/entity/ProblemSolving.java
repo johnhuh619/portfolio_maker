@@ -2,7 +2,6 @@ package io.resume.make.domain.projects.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.util.UUID;
 
@@ -14,6 +13,7 @@ import java.util.UUID;
 @Builder
 @Table(name = "problem_solving", indexes = {
         @Index(name = "idx_project_id", columnList = "project_id")
+
 })
 public class ProblemSolving {
 
