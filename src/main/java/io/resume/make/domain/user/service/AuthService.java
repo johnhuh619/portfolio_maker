@@ -1,12 +1,22 @@
 package io.resume.make.domain.user.service;
 
+import io.resume.make.domain.user.dto.KakaoTokenResponse;
+import io.resume.make.domain.user.dto.LoginResponse;
 import io.resume.make.domain.user.repository.UserRepository;
 import io.resume.make.global.exception.BusinessException;
 import io.resume.make.global.response.GlobalErrorCode;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -19,6 +29,7 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final WebClient webClient;
 
     @Value("${kakao.login.api_key}")
     private String apiKey;
@@ -33,7 +44,7 @@ public class AuthService {
     private List<String> allowedRedirectUris;
 
     /**
-     * 카카오 로그인 처리
+     * 카카오 로그인 url 생성
      *
      * @return
      */
@@ -59,6 +70,50 @@ public class AuthService {
                 "state", state
         );
     }
+
+    public KakaoTokenResponse exchangeKakaoToken(String code, String codeVerifier, String redirectUri) {
+        String tokenUrl = UriComponentsBuilder.fromUriString(kakaoBaseUri)
+                .path("/oauth/token")
+                .build()
+                .toUriString();
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", apiKey);
+        params.add("redirect_uri", redirectUri);
+        params.add("code", code);
+        params.add("client_secret", clientSecret);
+        params.add("code_verifier", codeVerifier);
+
+        return webClient.post()
+                .uri(tokenUrl)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .body(BodyInserters.fromFormData(params))
+                .retrieve().bodyToMono(KakaoTokenResponse.class)
+                .block();
+    }
+
+
+    /**
+     * @param code
+     * @param state
+     * @param codeVerifier
+     * @param redirectUri
+     * @param response
+     * @return
+     */
+    public LoginResponse processKakaoLogin(String code, String state, String codeVerifier, String redirectUri, HttpServletRequest response) {
+        log.info("processing kakao login: code: {}, state: {}, codeVerifier: {}, redirectUri: {}", code, state, codeVerifier, redirectUri);
+        KakaoTokenResponse tokenResponse = exchangeKakaoToken(code, codeVerifier, redirectUri);
+
+        String accessToken = tokenResponse!= null ? tokenResponse.accessToken() : null;
+        if (accessToken == null) {
+            log.error("Failed to get access token from Kakao");
+            throw new RuntimeException("Failed to get access token from Kakao");
+        }
+
+    }
+
 
     /**
      * 토큰 재발급
