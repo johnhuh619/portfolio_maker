@@ -9,4 +9,7 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByKakaoId(String kakaoId);
     boolean existsByKakaoId(String kakaoId);
+
+    Optional<User> findByProviderAndProviderId(String provider, String providerId);
+
 }

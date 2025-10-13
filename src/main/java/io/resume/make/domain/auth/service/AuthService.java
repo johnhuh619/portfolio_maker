@@ -1,20 +1,21 @@
-package io.resume.make.domain.user.service;
+package io.resume.make.domain.auth.service;
 
-import io.resume.make.domain.user.dto.KakaoTokenResponse;
-import io.resume.make.domain.user.dto.LoginResponse;
+import io.resume.make.domain.auth.dto.KakaoTokenResponse;
+import io.resume.make.domain.auth.dto.LoginResponse;
+import io.resume.make.domain.auth.jwt.JwtTokenProvider;
+import io.resume.make.domain.user.entity.User;
 import io.resume.make.domain.user.repository.UserRepository;
 import io.resume.make.global.exception.BusinessException;
 import io.resume.make.global.response.GlobalErrorCode;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -30,6 +31,8 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final WebClient webClient;
+    private final CookieManager cookieManager;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${kakao.login.api_key}")
     private String apiKey;
@@ -93,25 +96,69 @@ public class AuthService {
                 .block();
     }
 
+    public Map<String, Object> getUserInfo(String accessToken) {
+        return webClient.get()
+                .uri("http://kapi.kakao.com/v2/user/me")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                })
+                .block();
+    }
 
-    /**
-     * @param code
-     * @param state
-     * @param codeVerifier
-     * @param redirectUri
-     * @param response
+
+    public User processKakaoUser(String accessToken) {
+        Map<String, Object> userInfo = getUserInfo(accessToken);
+        return saveOrUpdateKakaoUser(userInfo);
+    }
+
+    private User saveOrUpdateKakaoUser(Map<String, Object> userInfo) {
+        Long providerId = (Long) userInfo.get("id");
+        Map<String, Object> account = (Map<String, Object>)userInfo.get("kakao_account");
+        String name = (String) account.get("nickname");
+        String email = (String) account.get("email");
+
+        User user = userRepository.findByProviderAndProviderId("kakao", String.valueOf(providerId))
+                .orElseGet(() -> User.builder()
+                        .provider("kakao")
+                        .providerId(String.valueOf(providerId))
+                        .email(email)
+                        .name(name)
+                        .build()
+                );
+        user.updateName(name);
+        return userRepository.save(user);
+    }
+
+    /** 카카오 로그인 처리
+     * @param code code
+     * @param state state
+     * @param codeVerifier front에서 줘야 하는 pkce
+     * @param redirectUri redirecturi
+     * @param response 로그인 응답 dto
      * @return
      */
-    public LoginResponse processKakaoLogin(String code, String state, String codeVerifier, String redirectUri, HttpServletRequest response) {
+    public LoginResponse processKakaoLogin(String code, String state, String codeVerifier, String redirectUri, HttpServletResponse response) {
         log.info("processing kakao login: code: {}, state: {}, codeVerifier: {}, redirectUri: {}", code, state, codeVerifier, redirectUri);
         KakaoTokenResponse tokenResponse = exchangeKakaoToken(code, codeVerifier, redirectUri);
 
+        // 카카오 토큰으로 사용자 정보 요청 및 처리
         String accessToken = tokenResponse!= null ? tokenResponse.accessToken() : null;
         if (accessToken == null) {
             log.error("Failed to get access token from Kakao");
             throw new RuntimeException("Failed to get access token from Kakao");
         }
 
+        // 사용자 정보 조회 및 처리
+        User user = processKakaoUser(accessToken);
+
+        // 로그인 사용자 서비스 토큰 생성
+        String jwtAccessToken = jwtTokenProvider.generateAccessToken(user);
+        String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(user);
+
+        cookieManager.addCookie(response, cookieManager.createRefreshTokenCookie(jwtRefreshToken));
+        return LoginResponse.of(jwtAccessToken, user, jwtRefreshToken);
     }
 
 

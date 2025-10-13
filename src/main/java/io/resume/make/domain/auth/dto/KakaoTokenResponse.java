@@ -1,4 +1,4 @@
-package io.resume.make.domain.user.dto;
+package io.resume.make.domain.auth.dto;
 
 public record KakaoTokenResponse(
     String accessToken,

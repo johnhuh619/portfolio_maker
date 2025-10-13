@@ -1,7 +1,7 @@
-package io.resume.make.domain.user.controller;
+package io.resume.make.domain.auth.controller;
 
 
-import io.resume.make.domain.user.service.AuthService;
+import io.resume.make.domain.auth.service.AuthService;
 import io.resume.make.global.response.BaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
