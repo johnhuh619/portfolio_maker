@@ -1,6 +1,6 @@
 package io.resume.make.domain.user.service;
 
-import io.resume.make.domain.auth.service.AuthService;
+import io.resume.make.domain.auth.service.KakaoOAuthService;
 import io.resume.make.domain.user.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Transactional
 public class MemberService {
-    private final AuthService authService;
+    private final KakaoOAuthService kakaoOAuthService;
     private final UserRepository userRepository;
 
 }

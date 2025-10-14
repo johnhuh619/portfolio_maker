@@ -1,7 +1,7 @@
 package io.resume.make.domain.auth.controller;
 
 
-import io.resume.make.domain.auth.service.AuthService;
+import io.resume.make.domain.auth.service.KakaoOAuthService;
 import io.resume.make.global.response.BaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+    private final KakaoOAuthService kakaoOAuthService;
 
     /**
      * kakao URL 생성
@@ -32,7 +32,7 @@ public class AuthController {
         HttpServletRequest request
     ) {
         log.info("Generating kakao Url with redirectUri: {}", redirectUri);
-        Map<String, String>loginUrlInfo = authService.getKakaoUrl(redirectUri, codeChallenge);
+        Map<String, String>loginUrlInfo = kakaoOAuthService.getKakaoUrl(redirectUri, codeChallenge);
         return BaseResponse.ok(loginUrlInfo);
     }
 
