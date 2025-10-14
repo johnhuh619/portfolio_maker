@@ -13,7 +13,7 @@ public record LoginResponse(
         String nickname,
         String refreshToken
 ) {
-    public static LoginResponse of(String jwtAccessToken, User user, String jwtRefreshToken) {
+    public static LoginResponse of(User user, String jwtAccessToken, String jwtRefreshToken) {
         return LoginResponse.builder()
                 .accessToken(jwtAccessToken)
                 .userId(user.getId())

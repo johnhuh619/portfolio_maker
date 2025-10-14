@@ -154,18 +154,39 @@ public class AuthService {
         User user = processKakaoUser(accessToken);
 
         // 로그인 사용자 서비스 토큰 생성
-        String jwtAccessToken = jwtTokenProvider.generateAccessToken(user);
-        String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(user);
+        String jwtAccessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail() != null ? user.getEmail() : user.getName());
+        String jwtRefreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail() != null ? user.getEmail() : user.getName());
 
         cookieManager.addCookie(response, cookieManager.createRefreshTokenCookie(jwtRefreshToken));
-        return LoginResponse.of(jwtAccessToken, user, jwtRefreshToken);
+        return LoginResponse.of(user, jwtAccessToken, jwtRefreshToken);
     }
 
 
     /**
      * 토큰 재발급
      */
-    //TODO
+    public LoginResponse refreshToken(String refreshToken, HttpServletResponse response) {
+        if(refreshToken == null || refreshToken.isEmpty() ) {
+            log.error("refreshToken is null");
+            throw new RuntimeException("refreshToken is null");
+        }
+
+        // 2. 리프레시 토큰 valid
+
+        // 3. 토큰에서 사용자 ID 추출 및 회원 조회
+        UUID userId = jwtTokenProvider.extractUserId(refreshToken);
+        log.info("Refreshing token for userId: {}", userId);
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 4. 기존 토큰 blacklist 추가
+
+        // 5. 새 토큰 발급
+        String newAccessToken = jwtTokenProvider.generateAccessToken(userId, user.getEmail());
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId, user.getEmail());
+        cookieManager.addCookie(response, cookieManager.createRefreshTokenCookie(newRefreshToken));
+        log.debug("Using cookie for refresh token");
+        return LoginResponse.of(user, newAccessToken, newRefreshToken);
+    }
 
     /**
      * 로그아웃
