@@ -33,6 +33,7 @@ kakao:
     client_secret: ${KAKAO_CLIENT_SECRET:}
     uri:
       base: https://kauth.kakao.com
+    admin_key: ${KAKAO_ADMIN_KEY:}
 
 oauth:
   kakao:

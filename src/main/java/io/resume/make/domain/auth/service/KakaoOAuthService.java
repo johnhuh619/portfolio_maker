@@ -38,6 +38,9 @@ public class KakaoOAuthService {
     @Value("${kakao.login.uri.base}")
     private String kakaoBaseUri;
 
+    @Value("${kakao.login.admin_key:}")
+    private String adminKey;
+
     @Value("${oauth.kakao.redirect-uris}")
     private List<String> allowedRedirectUris;
 
@@ -115,5 +118,29 @@ public class KakaoOAuthService {
     /**
      * 로그아웃
      */
-    //TODO
+    public void logoutKakaoUser(String providerId) {
+        if (adminKey == null || adminKey.isBlank()) {
+            log.warn("Kakao admin key is not configured, skipping Kakao logout for providerId={}", providerId);
+            return;
+        }
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("target_id_type", "user_id");
+        params.add("target_id", providerId);
+
+        try {
+            webClient.post()
+                    .uri("https://kapi.kakao.com/v1/user/logout")
+                    .header(HttpHeaders.AUTHORIZATION, "KakaoAK " + adminKey)
+                    .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
+                    .body(BodyInserters.fromFormData(params))
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+            log.info("Successfully logged out Kakao user {}", providerId);
+        } catch (Exception e) {
+            log.warn("Failed to logout Kakao user {}: {}", providerId, e.getMessage());
+        }
+    }
+
 }

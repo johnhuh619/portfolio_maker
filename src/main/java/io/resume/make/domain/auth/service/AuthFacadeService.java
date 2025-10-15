@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -75,7 +76,16 @@ public class AuthFacadeService {
     }
 
     public void logout(String refreshToken, HttpServletResponse response) {
-        tokenService.revokeRefreshToken(refreshToken, response);
+        UUID userId = tokenService.revokeRefreshToken(refreshToken, response);
+        if (userId == null) {
+            return;
+        }
+
+        userRepository.findById(userId).ifPresent(user -> {
+            if ("kakao".equalsIgnoreCase(user.getProvider()) && user.getProviderId() != null) {
+                kakaoOAuthService.logoutKakaoUser(user.getProviderId());
+            }
+        });
     }
 
     private String extractNickname(Map<String, Object> account) {

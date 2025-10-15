@@ -72,27 +72,28 @@ public class TokenService {
         return LoginResponse.of(user, newAccessToken, newRefreshToken);
     }
 
-    public void revokeRefreshToken(String refreshToken, HttpServletResponse response) {
+    public UUID revokeRefreshToken(String refreshToken, HttpServletResponse response) {
         cookieManager.removeCookie(response);
 
         if (refreshToken == null || refreshToken.isBlank()) {
             log.warn("No refresh token provided for logout");
-            return;
+            return null;
         }
 
         if (blacklistedTokenRepository.existsByRefreshToken(refreshToken)) {
             log.info("Refresh token already blacklisted");
-            return;
+            return null;
         }
 
         if (!jwtTokenProvider.validateToken(refreshToken)){
             log.warn("Invalid refresh token provided during logout");
-            return;
+            return null;
         }
 
         UUID userId = jwtTokenProvider.extractUserId(refreshToken);
         addToBlacklist(refreshToken, userId);
         log.info("Refresh token revoked for userId: {}", userId);
+        return userId;
     }
 
     public void blacklistRefreshToken(String refreshToken, UUID userId, LocalDateTime expiresAt) {
