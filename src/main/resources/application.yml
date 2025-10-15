@@ -16,6 +16,7 @@ spring:
         format_sql: true
         show_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
+
   data:
     redis:
       host: localhost
@@ -25,12 +26,46 @@ spring:
           max-active: 10
           max-idle: 10
           min-idle: 0
+
+kakao:
+  login:
+    api_key: ${KAKAO_REST_API_KEY:}
+    client_secret: ${KAKAO_CLIENT_SECRET:}
+    uri:
+      base: https://kauth.kakao.com
+
 oauth:
   kakao:
     redirect-uris:
-      - http://localhost3000/callback
+      - http://localhost:3000/callback
+
+jwt:
+  secret: ${JWT_SECRET:change-me-change-me-change-me-change-me}
+  access-token-expiration-time: ${JWT_ACCESS_TOKEN_TTL:3600000}
+  refresh-token-expiration-time: ${JWT_REFRESH_TOKEN_TTL:1209600000}
+  use-cookie: ${JWT_USE_COOKIE:false}
+
+cookie:
+  domain: ${COOKIE_DOMAIN:localhost}
+  secure: ${COOKIE_SECURE:false}
+  http-only: ${COOKIE_HTTP_ONLY:true}
+  same-site: ${COOKIE_SAME_SITE:Lax}
+  max-age: ${COOKIE_MAX_AGE:604800}
 
 logging:
   level:
     org.springframework.security: DEBUG
     io.resume: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+jwt:
+  use-cookie: true
+
+cookie:
+  secure: true
+  same-site: None

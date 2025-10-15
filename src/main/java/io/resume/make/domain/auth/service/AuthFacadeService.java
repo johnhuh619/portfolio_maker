@@ -26,7 +26,7 @@ public class AuthFacadeService {
      * @param codeVerifier front에서 줘야 하는 pkce
      * @param redirectUri redirecturi
      * @param response 로그인 응답 dto
-     * @return
+     * @return 로그인 사용자 서비스 토큰 생성
      */
     public LoginResponse processKakaoLogin(String code, String state, String codeVerifier, String redirectUri, HttpServletResponse response) {
         log.info("processing kakao login: code: {}, state: {}, codeVerifier: {}, redirectUri: {}", code, state, codeVerifier, redirectUri);
@@ -48,15 +48,20 @@ public class AuthFacadeService {
     }
 
     private User saveOrUpdateKakaoUser(Map<String, Object> userInfo) {
-        Long providerId = (Long) userInfo.get("id");
-        Map<String, Object> account = (Map<String, Object>)userInfo.get("kakao_account");
-        String name = (String) account.get("nickname");
-        String email = (String) account.get("email");
+        Object providerIdObj = userInfo.get("id");
+        if (!(providerIdObj instanceof Number providerIdNumber)) {
+            throw new IllegalStateException("Kakao user id is missing or invalid");
+        }
+        String providerId = String.valueOf(providerIdNumber.longValue());
 
-        User user = userRepository.findByProviderAndProviderId("kakao", String.valueOf(providerId))
+        Map<String, Object> account = (Map<String, Object>) userInfo.getOrDefault("kakao_account", Map.of());
+        String name = extractNickname(account);
+        String email = account != null ? (String) account.get("email") : null;
+
+        User user = userRepository.findByProviderAndProviderId("kakao", providerId)
                 .orElseGet(() -> User.builder()
                         .provider("kakao")
-                        .providerId(String.valueOf(providerId))
+                        .providerId(providerId)
                         .email(email)
                         .name(name)
                         .build()
@@ -67,5 +72,24 @@ public class AuthFacadeService {
 
     public LoginResponse refreshToken(String refreshToken, HttpServletResponse response) {
         return tokenService.refreshTokens(refreshToken, response);
+    }
+
+    public void logout(String refreshToken, HttpServletResponse response) {
+        tokenService.revokeRefreshToken(refreshToken, response);
+    }
+
+    private String extractNickname(Map<String, Object> account) {
+        if (account == null) {
+            return null;
+        }
+        Object profileObj = account.get("profile");
+        if (profileObj instanceof Map<?,?> profile) {
+            Object nickname = profile.get("nickname");
+            if (nickname instanceof String nick) {
+                return nick;
+            }
+        }
+        Object directNickname = account.get("nickname");
+        return directNickname instanceof String nick ? nick : null;
     }
 }

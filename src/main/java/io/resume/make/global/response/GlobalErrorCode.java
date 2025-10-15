@@ -27,8 +27,11 @@ public enum GlobalErrorCode implements ErrorCode {
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR("GLOBAL_5000", "서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
-    SERVICE_UNAVAILABLE("GLOBAL_5001", "일시적으로 서비스를 이용할 수 없습니다.", HttpStatus.SERVICE_UNAVAILABLE);
-
+    SERVICE_UNAVAILABLE("GLOBAL_5001", "일시적으로 서비스를 이용할 수 없습니다.", HttpStatus.SERVICE_UNAVAILABLE),
+    INVALID_TOKEN("GLOBAL","토큰이 잘못되었습니다." , HttpStatus.BAD_REQUEST ),
+    BLACKLISTED_TOKEN("GLOBAL","토큰이 이미 블랙리스트 되었습니다." , HttpStatus.BAD_REQUEST),
+    USER_NOT_FOUND("GLOBAL","유저 없음" ,HttpStatus.BAD_REQUEST ),
+    EXPIRED_TOKEN("GLOBAL","만료된 token" , HttpStatus.BAD_REQUEST ),;
 
     private final String code;
     private final String message;
@@ -40,8 +43,19 @@ public enum GlobalErrorCode implements ErrorCode {
         this.status = status;
     }
 
-    @Override public String getCode() { return code; }
-    @Override public String getMessage() { return message; }
-    @Override public HttpStatus getStatus() { return status; }
+    @Override
+    public String getCode() {
+        return code;
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
+    }
+
+    @Override
+    public HttpStatus getStatus() {
+        return status;
+    }
 
 }

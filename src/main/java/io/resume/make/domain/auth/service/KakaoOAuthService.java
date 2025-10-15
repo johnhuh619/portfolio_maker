@@ -69,11 +69,22 @@ public class KakaoOAuthService {
         );
     }
 
+    /**
+     * kakao 인증 code로 토큰 교환
+     * @param code
+     * @param codeVerifier
+     * @param redirectUri
+     * @return
+     */
     public KakaoTokenResponse exchangeKakaoToken(String code, String codeVerifier, String redirectUri) {
         String tokenUrl = UriComponentsBuilder.fromUriString(kakaoBaseUri)
                 .path("/oauth/token")
                 .build()
                 .toUriString();
+
+        log.info("Exchanging authorization code for token with redirect URI: {}", redirectUri);
+        log.info("Authorization code: {}", code);
+        log.info("PKCE code_verifier: {}", codeVerifier);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
@@ -93,7 +104,7 @@ public class KakaoOAuthService {
 
     public Map<String, Object> getUserInfo(String accessToken) {
         return webClient.get()
-                .uri("http://kapi.kakao.com/v2/user/me")
+                .uri("https://kapi.kakao.com/v2/user/me")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                 .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8")
                 .retrieve()
