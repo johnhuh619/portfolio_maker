@@ -18,7 +18,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -27,7 +26,7 @@ public class KakaoOAuthService {
 
     private final UserRepository userRepository;
     private final WebClient webClient;
-
+    private final StateManager stateManager;
 
     @Value("${kakao.login.api_key}")
     private String apiKey;
@@ -50,7 +49,7 @@ public class KakaoOAuthService {
      * @return
      */
     public Map<String, String> getKakaoUrl(String redirectUri, String codeChallenge) {
-        String state = UUID.randomUUID().toString();
+        String state = stateManager.generateAndStoreState(codeChallenge);
         log.info("State: {}", state);
 
         if (!allowedRedirectUris.contains(redirectUri)) {
