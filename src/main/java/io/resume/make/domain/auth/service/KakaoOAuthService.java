@@ -1,6 +1,7 @@
 package io.resume.make.domain.auth.service;
 
 import io.resume.make.domain.auth.dto.KakaoTokenResponse;
+import io.resume.make.domain.auth.exception.OAuthErrorCode;
 import io.resume.make.domain.user.repository.UserRepository;
 import io.resume.make.global.exception.BusinessException;
 import io.resume.make.global.response.GlobalErrorCode;
@@ -14,8 +15,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -73,6 +78,7 @@ public class KakaoOAuthService {
 
     /**
      * kakao 인증 code로 토큰 교환
+     *
      * @param code
      * @param codeVerifier
      * @param redirectUri
@@ -96,12 +102,42 @@ public class KakaoOAuthService {
         params.add("client_secret", clientSecret);
         params.add("code_verifier", codeVerifier);
 
-        return webClient.post()
-                .uri(tokenUrl)
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .body(BodyInserters.fromFormData(params))
-                .retrieve().bodyToMono(KakaoTokenResponse.class)
-                .block();
+        try {
+            return webClient.post()
+                    .uri(tokenUrl)
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .body(BodyInserters.fromFormData(params))
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError(),
+                            response -> response.bodyToMono(String.class)
+                                    .map(body -> {
+                                        log.error("kakao token exchange failed(4xx): {}", body);
+                                        return new BusinessException(OAuthErrorCode.INVALID_AUTHORIZATION_CODE);
+                                    })
+                    )
+                    .onStatus(
+                            status -> status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .map(body -> {
+                                        log.error("kakao server error(5xx): {}", body);
+                                        return new BusinessException(OAuthErrorCode.KAKAO_SERVER_ERROR);
+                                    })
+                    )
+                    .bodyToMono(KakaoTokenResponse.class)
+                    .timeout(Duration.ofSeconds(10))
+                    .retryWhen(Retry.backoff(3, Duration.ofSeconds(1))
+                            .filter(throwable -> !(throwable instanceof BusinessException)))
+                    .block();
+        } catch (WebClientResponseException e) {
+            log.error("WebClient error during token exchange: status={}, body={}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new BusinessException(OAuthErrorCode.KAKAO_TOKEN_EXCHANGE_FAILED);
+        } catch (Exception e) {
+            log.error("Unexpected error during token exchange: {}", e.getMessage());
+            throw new BusinessException(OAuthErrorCode.KAKAO_TOKEN_EXCHANGE_FAILED);
+        }
+
     }
 
     public Map<String, Object> getUserInfo(String accessToken) {
@@ -110,12 +146,34 @@ public class KakaoOAuthService {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                 .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8")
                 .retrieve()
+                // 4xx
+                .onStatus(
+                        status -> status.is4xxClientError(),
+                        response -> response.bodyToMono(String.class)
+                                .map(body -> {
+                                    log.error("kakao user info failed(4xx): {}", body);
+                                    return new BusinessException(OAuthErrorCode.KAKAO_USER_INFO_FAILED);
+                                })
+                )
+                // 5xx 에러 처리
+                .onStatus(
+                        status -> status.is5xxServerError(),
+                        response -> response.bodyToMono(String.class)
+                                .map(body -> {
+                                    log.error("Kakao server error while getting user info (5xx): {}", body);
+                                    return new BusinessException(OAuthErrorCode.KAKAO_SERVER_ERROR);
+                                })
+                )
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                 })
+                .timeout(Duration.ofSeconds(10))
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(1))
+                        .filter(throwable -> !(throwable instanceof BusinessException)))
                 .block();
     }
+
     /**
-     * 로그아웃
+     * 로그아웃(UNLINK)
      */
     public void logoutKakaoUser(String providerId) {
         if (adminKey == null || adminKey.isBlank()) {
@@ -134,7 +192,17 @@ public class KakaoOAuthService {
                     .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
                     .body(BodyInserters.fromFormData(params))
                     .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .map(body -> {
+                                        log.warn("Failed to logout Kakao user {}: {}", providerId, body);
+                                        return new BusinessException(OAuthErrorCode.KAKAO_LOGOUT_FAILED);
+                                    })
+                    )
                     .bodyToMono(Void.class)
+                    .timeout(Duration.ofSeconds(10))
+                    .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
                     .block();
             log.info("Successfully logged out Kakao user {}", providerId);
         } catch (Exception e) {
