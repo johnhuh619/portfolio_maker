@@ -14,7 +14,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class StateManager {
-    private static final String STATE_PREFIX = "oauth:state";
+    private static final String STATE_PREFIX = "oauth:state:";
     private static final Duration STATE_EXPIRATION = Duration.ofMinutes(10);
 
     private final RedisTemplate<String, String> redisTemplate;

@@ -51,7 +51,7 @@ public class AuthFacadeService {
         String accessToken = tokenResponse!= null ? tokenResponse.accessToken() : null;
         if (accessToken == null) {
             log.error("Failed to get access token from Kakao");
-            throw new RuntimeException("Failed to get access token from Kakao");
+            throw new BusinessException(OAuthErrorCode.KAKAO_TOKEN_EXCHANGE_FAILED);
         }
 
         // 사용자 정보 조회 및 처리
