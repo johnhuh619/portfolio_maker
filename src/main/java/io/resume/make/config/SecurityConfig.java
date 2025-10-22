@@ -28,7 +28,12 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         // 인증 제외
-                        .requestMatchers("/auth/kakao/url", "/auth/kakao/login").permitAll()
+                        .requestMatchers(
+                                "/auth/kakao/url",
+                                "/auth/kakao/login",
+                                "/auth/logout",
+                                "/auth/refresh"
+                        ).permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/test/**").permitAll() // 테스트 컨트롤러 (test profile only)
                         // 인증 필요
