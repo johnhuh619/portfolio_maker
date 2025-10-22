@@ -30,6 +30,7 @@ public class SecurityConfig {
                         // 인증 제외
                         .requestMatchers("/auth/kakao/url", "/auth/kakao/login").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/test/**").permitAll() // 테스트 컨트롤러 (test profile only)
                         // 인증 필요
                         .anyRequest().authenticated());
         return http.build();

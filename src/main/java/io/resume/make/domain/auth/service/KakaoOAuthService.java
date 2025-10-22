@@ -15,7 +15,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.util.retry.Retry;
@@ -45,7 +44,7 @@ public class KakaoOAuthService {
     @Value("${kakao.login.admin_key:}")
     private String adminKey;
 
-    @Value("${oauth.kakao.redirect-uris}")
+    @Value("${oauth.kakao.redirect-uris:http://localhost:3000/callback}")
     private List<String> allowedRedirectUris;
 
     /**
