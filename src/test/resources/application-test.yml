@@ -1,0 +1,56 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+        dialect: org.hibernate.dialect.H2Dialect
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  sql:
+    init:
+      mode: never
+
+kakao:
+  login:
+    api_key: test_api_key
+    client_secret: test_client_secret
+    uri:
+      base: https://kauth.kakao.com
+    admin_key: test_admin_key
+
+oauth:
+  kakao:
+    redirect-uris:
+      - http://localhost:3000/callback
+      - http://test.com/callback
+
+jwt:
+  secret: test-secret-key-for-jwt-token-minimum-32-characters-long
+  access-token-expiration-time: 3600000
+  refresh-token-expiration-time: 1209600000
+  use-cookie: false
+
+cookie:
+  domain: localhost
+  secure: false
+  http-only: true
+  same-site: Lax
+  max-age: 604800
+
+logging:
+  level:
+    org.springframework.security: INFO
+    io.resume: DEBUG
