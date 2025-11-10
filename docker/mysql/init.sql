@@ -1,16 +1,17 @@
 CREATE DATABASE IF NOT EXISTS portfolio_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE portfolio_db
+USE portfolio_db;
 
-CREATE TABLE users(
+CREATE TABLE users (
     user_id BINARY(16) PRIMARY KEY,
-    kakao_id VARCHAR(100) UNIQUE NOT NULL,
+    provider VARCHAR(100),
+    provider_id VARCHAR(100) UNIQUE NOT NULL,
     email VARCHAR(255),
     name VARCHAR(100),
     profile_image VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_kakao_id (kakao_id)
+    INDEX idx_provider_id (provider_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE projects (

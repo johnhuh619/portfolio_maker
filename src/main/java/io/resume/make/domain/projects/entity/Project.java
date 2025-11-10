@@ -1,18 +1,16 @@
 package io.resume.make.domain.projects.entity;
 
+import io.resume.make.domain.projects.converter.JsonConverter;
+import io.resume.make.domain.projects.converter.TeamInfoConverter;
 import io.resume.make.domain.projects.entity.vo.TeamInfo;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.JdbcTypeCode;
 
-import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Entity
