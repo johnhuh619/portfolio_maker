@@ -2,6 +2,8 @@ package io.resume.make.domain.auth.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import io.resume.make.global.exception.BusinessException;
+import io.resume.make.global.response.GlobalErrorCode;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,11 +74,11 @@ public class JwtTokenProvider {
             String idString = claims.getSubject();
             return UUID.fromString(idString);
         } catch (ExpiredJwtException e) {
-            log.error("Expired JWT Token while getting userId: {}", e.getMessage());
-            throw new IllegalArgumentException("Expired JWT Token while getting userId");
-        } catch (Exception e) {
+            log.warn("Expired JWT while getting userId");
+            throw new BusinessException(GlobalErrorCode.EXPIRED_TOKEN);
+        } catch (JwtException e) {
             log.error("Invalid JWT Token while getting userId: {}", e.getMessage());
-            throw new IllegalArgumentException("Invalid JWT Token while getting userId");
+            throw new BusinessException(GlobalErrorCode.INVALID_TOKEN);
         }
     }
 
@@ -112,12 +114,12 @@ public class JwtTokenProvider {
     }
 
 
-    public boolean validateToken(String refreshToken) {
+    public boolean validateToken(String token) {
         try {
             Jws<Claims> jwt = Jwts.parser()
                     .verifyWith(key)
                     .build()
-                    .parseSignedClaims(refreshToken);
+                    .parseSignedClaims(token);
             return jwt.getBody().getExpiration().after(new Date());
         } catch (ExpiredJwtException e) {
             log.warn("Expired JWT Token while validating token: {}", e.getMessage());
@@ -127,5 +129,16 @@ public class JwtTokenProvider {
             return false;
         }
 
+    }
+
+    public boolean hasTokenType(String token, String expectedType) {
+        try {
+            Claims claims = getClaims(token);
+            String tokenType = claims.get("token_type", String.class);
+            return expectedType.equals(tokenType);
+        } catch (Exception e) {
+            log.warn("Failed to validate token type: {}", e.getMessage());
+            return false;
+        }
     }
 }

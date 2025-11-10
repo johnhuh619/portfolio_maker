@@ -13,26 +13,31 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-@Table(name = "backlisted_refresh_token",
-        indexes = {@Index(name = "idx_user_id", columnList = "user_id")})
+@Table(name = "blacklisted_refresh_token",
+	indexes = {
+		@Index(name = "idx_user_id", columnList = "user_id"),
+		@Index(name = "ux_token_hash", columnList = "token_hash", unique = true),
+		@Index(name = "idx_expired_at", columnList = "expiredAt")
+	})
 public class BlacklistedRefreshToken {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @Column(name = "user_id", nullable = false, columnDefinition = "Binary(16)")
-    private UUID userId;
+	@Column(name = "user_id", nullable = false, columnDefinition = "BINARY(16)")
+	private UUID userId;
 
-    private String refreshToken;
+	@Column(name = "token_hash", nullable = false, columnDefinition = "BINARY(32)")
+	private byte[] tokenHash;
 
-    private LocalDateTime createdAt;
+	private LocalDateTime createdAt;
 
-    private LocalDateTime expiredAt;
+	private LocalDateTime expiredAt;
 
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        this.expiredAt = this.createdAt.plusDays(30);
-    }
+	@PrePersist
+	public void prePersist() {
+		this.createdAt = LocalDateTime.now();
+		this.expiredAt = this.createdAt.plusDays(30);
+	}
 }

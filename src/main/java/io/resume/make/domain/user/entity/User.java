@@ -14,49 +14,53 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "users", indexes = {
-                @Index(name = "idx_provider_id", columnList = "provider_id")
-})
+@Table(name = "users",
+	uniqueConstraints = {
+		@UniqueConstraint(name = "uk_provider_provider_id", columnNames = {"provider", "provider_id"})
+	},
+	indexes = {
+		@Index(name = "idx_provider_id", columnList = "provider, provider_id")
+	})
 public class User {
 
-    @Id
-    @GeneratedValue
-    @Column(name = "user_id", columnDefinition = "BINARY(16)")
-    private UUID id;
+	@Id
+	@GeneratedValue
+	@Column(name = "user_id", columnDefinition = "BINARY(16)")
+	private UUID id;
 
-    @Column(length = 100)
-    private String provider;
+	@Column(length = 100, nullable = false)
+	private String provider;
 
-    @Column(name = "provider_id", length = 100, nullable = false, unique = true)
-    private String providerId;
+	@Column(name = "provider_id", length = 100, nullable = false)
+	private String providerId;
 
-    @Column(length = 255)
-    private String email;
+	@Column(length = 255)
+	private String email;
 
-    @Column(length = 100)
-    private String name;
+	@Column(length = 100)
+	private String name;
 
-//    @Column(name = "profile_image", length = 100)
-//    private String profileImg;
+	//    @Column(name = "profile_image", length = 100)
+	//    private String profileImg;
 
-    @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime createdAt;
+	@Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+	private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-    private LocalDateTime updatedAt;
+	@Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+	private LocalDateTime updatedAt;
 
-    @Builder
-    public User(String provider, String providerId, String email, String name) {
-        this.provider = provider;
-        this.providerId = providerId;
-        this.email = email;
-        this.name = name;
-//        this.profileImg = profileImg;
-    }
+	@Builder
+	public User(String provider, String providerId, String email, String name) {
+		this.provider = provider;
+		this.providerId = providerId;
+		this.email = email;
+		this.name = name;
+		//        this.profileImg = profileImg;
+	}
 
-    public void updateName(String name) {
-        if (!Objects.equals(this.name, name)){
-            this.name = name;
-        }
-    }
+	public void updateName(String name) {
+		if (!Objects.equals(this.name, name)) {
+			this.name = name;
+		}
+	}
 }

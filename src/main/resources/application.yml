@@ -1,3 +1,4 @@
+#통합 테스트(StateManagerTest, AuthIntegrationTest)에는 Redis가 필요합니다.
 spring:
   profiles:
     active: local

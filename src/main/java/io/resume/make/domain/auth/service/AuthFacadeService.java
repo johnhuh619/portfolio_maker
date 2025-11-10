@@ -56,6 +56,10 @@ public class AuthFacadeService {
 
         // 사용자 정보 조회 및 처리
         Map<String, Object> userInfo = kakaoOAuthService.getUserInfo(accessToken);
+        if(userInfo == null) {
+            log.error("Kakao user info is null");
+            throw new BusinessException(OAuthErrorCode.KAKAO_USER_INFO_FAILED);
+        }
         User user = saveOrUpdateKakaoUser(userInfo);
 
         // return: 로그인 사용자 서비스 토큰 생성
@@ -65,7 +69,8 @@ public class AuthFacadeService {
     private User saveOrUpdateKakaoUser(Map<String, Object> userInfo) {
         Object providerIdObj = userInfo.get("id");
         if (!(providerIdObj instanceof Number providerIdNumber)) {
-            throw new IllegalStateException("Kakao user id is missing or invalid");
+            log.error("Kakao user id is missing or invalid: {}", providerIdObj);
+            throw new BusinessException(OAuthErrorCode.KAKAO_USER_INFO_FAILED);
         }
         String providerId = String.valueOf(providerIdNumber.longValue());
 

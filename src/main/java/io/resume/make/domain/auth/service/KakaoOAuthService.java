@@ -54,7 +54,7 @@ public class KakaoOAuthService {
      */
     public Map<String, String> getKakaoUrl(String redirectUri, String codeChallenge) {
         String state = stateManager.generateAndStoreState(codeChallenge);
-        log.info("State: {}", state);
+        log.debug("State generated");
 
         if (!allowedRedirectUris.contains(redirectUri)) {
             throw new BusinessException(GlobalErrorCode.INVALID_REDIRECT_URI);
@@ -90,8 +90,7 @@ public class KakaoOAuthService {
                 .toUriString();
 
         log.info("Exchanging authorization code for token with redirect URI: {}", redirectUri);
-        log.info("Authorization code: {}", code);
-        log.info("PKCE code_verifier: {}", codeVerifier);
+        log.debug("Attempting token exchange");
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");

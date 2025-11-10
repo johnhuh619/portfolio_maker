@@ -36,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = extractTokenFromRequest(request);
 
             // 2. token 있고 valid
-            if (token != null && jwtTokenProvider.validateToken(token)) {
+            if (token != null && jwtTokenProvider.validateToken(token) && jwtTokenProvider.hasTokenType(token, "access")) {
                 // 3. token 에서 user id extract
                 UUID userId = jwtTokenProvider.extractUserId(token);
 

@@ -54,7 +54,12 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of("GET","POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 
         // 허용 헤더
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of(
+            "Authorization",
+            "Content-Type",
+            "Accept",
+            "X-Requested-With"
+        ));
 
         // 쿠키/인증 정보 허용
         configuration.setAllowCredentials(true);

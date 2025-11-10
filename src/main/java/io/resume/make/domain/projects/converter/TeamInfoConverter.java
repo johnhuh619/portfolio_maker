@@ -22,7 +22,7 @@ public class TeamInfoConverter implements AttributeConverter<TeamInfo, String> {
             return objectMapper.writeValueAsString(attribute);
         } catch (JsonProcessingException e) {
             log.error("Failed to convert TeamInfo to JSON", e);
-            return null;
+            throw new IllegalStateException("Failed to serialize TeamInfo to database", e);
         }
     }
 
@@ -35,7 +35,7 @@ public class TeamInfoConverter implements AttributeConverter<TeamInfo, String> {
             return objectMapper.readValue(dbData, TeamInfo.class);
         } catch (JsonProcessingException e) {
             log.error("Failed to convert JSON to TeamInfo", e);
-            return null;
+            throw new IllegalStateException("Failed to deserialize TeamInfo from database", e);
         }
     }
 }

@@ -28,10 +28,10 @@ public enum GlobalErrorCode implements ErrorCode {
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR("GLOBAL_5000", "서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     SERVICE_UNAVAILABLE("GLOBAL_5001", "일시적으로 서비스를 이용할 수 없습니다.", HttpStatus.SERVICE_UNAVAILABLE),
-    INVALID_TOKEN("GLOBAL","토큰이 잘못되었습니다." , HttpStatus.BAD_REQUEST ),
-    BLACKLISTED_TOKEN("GLOBAL","토큰이 이미 블랙리스트 되었습니다." , HttpStatus.BAD_REQUEST),
-    USER_NOT_FOUND("GLOBAL","유저 없음" ,HttpStatus.BAD_REQUEST ),
-    EXPIRED_TOKEN("GLOBAL","만료된 token" , HttpStatus.BAD_REQUEST ),;
+    INVALID_TOKEN("GLOBAL_4011","유효하지 않은 토큰입니다." , HttpStatus.UNAUTHORIZED ),
+    BLACKLISTED_TOKEN("GLOBAL_4012","블랙리스트된 토큰입니다" , HttpStatus.UNAUTHORIZED),
+    USER_NOT_FOUND("GLOBAL_4041","유저 없음" ,HttpStatus.NOT_FOUND ),
+    EXPIRED_TOKEN("GLOBAL_4013","만료된 토큰" , HttpStatus.UNAUTHORIZED ),;
 
     private final String code;
     private final String message;

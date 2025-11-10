@@ -29,8 +29,8 @@ public class CookieManager {
 
     public static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
-    public ResponseCookie createRefreshTokenCookie(String refreshToken) {
-        return createBaseBuilder(refreshToken, maxAge != null ? maxAge : 604800L)
+    public ResponseCookie createRefreshTokenCookie(String refreshToken, Long maxAgeSeconds) {
+        return createBaseBuilder(refreshToken, maxAgeSeconds)
                 .build();
     }
 
